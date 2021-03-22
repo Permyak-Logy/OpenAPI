@@ -12,7 +12,7 @@ import os
 app = Flask(__name__)
 
 
-# TODO: Обработать параметры
+# TODO: Обработать параметры и добавить распознование разных форматов времени
 
 @app.route('/couriers', methods=['POST'])
 def couriers_post():
