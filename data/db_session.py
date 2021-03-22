@@ -14,7 +14,7 @@ def __enter__(self: Session) -> Session:
     return self
 
 
-def __exit__(self: Session, *args, **kwargs):
+def __exit__(self: Session, *_, **__):
     self.close()
 
 
@@ -45,4 +45,5 @@ def global_init(db_file):
 
 def create_session() -> Session:
     global __factory
+    # noinspection PyCallingNonCallable
     return __factory()
