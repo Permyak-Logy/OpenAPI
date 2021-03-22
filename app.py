@@ -2,13 +2,17 @@ from datetime import datetime
 
 from flask import Flask, jsonify, request
 
+from const import FILENAME_BD
 from data import db_session
 from data.couriers import Courier
 from data.orders import Order
 from data.orders_assign import OrderAssign
+import os
 
 app = Flask(__name__)
 
+
+# TODO: Обработать параметры
 
 @app.route('/couriers', methods=['POST'])
 def couriers_post():
@@ -58,8 +62,6 @@ def couriers_post():
 
 @app.route('/couriers/<int:courier_id>', methods=['PATCH'])
 def courier_patch(courier_id: int):
-    # TODO: Обработать заказы
-
     data: dict = request.json
 
     validate_keys = {"courier_type", "regions", "working_hours"}
@@ -73,6 +75,13 @@ def courier_patch(courier_id: int):
         c.set_courier_type(data.get('courier_type', c.get_courier_type()))
         c.set_regions(data.get('regions', c.get_regions()))
         c.set_working_hours(data.get('workings_hours', c.get_working_hours()))
+
+        # noinspection PyComparisonWithNone
+        for order in session.query(OrderAssign).filter(OrderAssign.courier_id == c.courier_id,
+                                                       OrderAssign.complete_time != None).all():
+            if not c.can_assign(order):
+                session.delete(order)
+
         session.commit()
 
         return jsonify(courier_id=c.get_courier_id(),
@@ -106,7 +115,6 @@ def orders_post():
         if all_passed:
             passed.append({'id': i})
         else:
-            print(repr(order['weight']))
             failed.append({'id': i})
 
     if failed:
@@ -186,6 +194,7 @@ def orders_complete_post():
     return jsonify({"order_id": order_id})
 
 
+# TODO: Проверить все тут
 @app.route('/couriers/<int:courier_id>', methods=['GET'])
 def couriers_get(courier_id: int):
     with db_session.create_session() as session:
@@ -195,7 +204,6 @@ def couriers_get(courier_id: int):
         if not courier:
             return "", 404
 
-        print(courier_id)
         payload = {
             "courier_id": courier.get_courier_id(),
             "courier_type": courier.get_courier_type(),
@@ -205,8 +213,9 @@ def couriers_get(courier_id: int):
 
         def td(number):
             # noinspection PyComparisonWithNone
-            orders: list = session.query(OrderAssign).filter(OrderAssign.complete_time != None,
-                                                             OrderAssign.order.region == number).all()
+            orders: list = session.query(OrderAssign).filter(OrderAssign.complete_time != None).all()
+            orders = list(filter(lambda x: x.order.region == number, orders))
+
             if not orders:
                 return 0
             orders.sort(key=lambda x: (x.complete_time, x.assign_time))
@@ -230,9 +239,13 @@ def couriers_get(courier_id: int):
         return jsonify(payload)
 
 
-def main():
-    db_session.global_init('db\\openapi.sqlite')
-    app.run("0.0.0.0", port=8080)
+def main(host="0.0.0.0", port=8080, **kwargs):
+    directory = os.path.split(FILENAME_BD)[0]
+    if directory and not os.path.isdir(directory):
+        os.mkdir(directory)
+    db_session.global_init(FILENAME_BD)
+
+    app.run(host, port, **kwargs)
 
 
 if __name__ == '__main__':

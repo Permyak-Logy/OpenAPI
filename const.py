@@ -1,3 +1,5 @@
+FILENAME_BD = "db\\openapi.sqlite"
+
 TYPES_WEIGHTS = {
     'foot': 10,
     'bike': 15,
