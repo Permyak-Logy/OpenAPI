@@ -118,7 +118,7 @@ class MyTestCase(unittest.TestCase):
 
         # GET .../couriers/courier_id
         self.assertEqual(get(f'{host}/couriers/999999').status_code, 404)
-        self.assertEqual(get(f'{host}/couriers/2').status_code, 202)
+        self.assertEqual(get(f'{host}/couriers/2').status_code, 200)
 
 
 if __name__ == '__main__':
