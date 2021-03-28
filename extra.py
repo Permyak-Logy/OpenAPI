@@ -5,7 +5,7 @@ import re
 def check_time_string(string: str) -> bool:
     """Проверяет строку времени в соответствии с форматом "HH:MM-HH:MM" """
     # noinspection RegExpAnonymousGroup
-    return bool(re.match(r'^([01]\d)|(2[0-3]):([0-5]\d)-([01]\d)|(2[0-3]):[0-5]\d$', string))
+    return bool(re.match(r'^(([01]\d)|(2[0-3])):[0-5]\d-(([01]\d)|(2[0-3])):[0-5]\d$', string))
 
 
 def split_time_string(string: check_time_string):

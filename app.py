@@ -71,7 +71,8 @@ def courier_patch(courier_id: int):
     with db_session.create_session() as session:
         session: db_session.Session
         c: Courier = session.query(Courier).filter(Courier.courier_id == courier_id).first()
-
+        if not c:
+            return "", 404
         c.set_courier_type(data.get('courier_type', c.get_courier_type()))
         c.set_regions(data.get('regions', c.get_regions()))
         c.set_working_hours(data.get('workings_hours', c.get_working_hours()))
