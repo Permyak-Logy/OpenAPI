@@ -13,7 +13,7 @@ sudo pip3 install sqlalchemy
 Вводим в терминале `python3 app.py`
 
 ### Тесты
-Вводим в терминале `python3 test.py`
+Вводим в терминале `python3 tests.py`
 
 ### Зависимости
 - `Flask` - фреймворк для создания WEB приложений. На основе его был создан этот REST сервис
