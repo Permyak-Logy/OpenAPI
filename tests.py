@@ -1,8 +1,7 @@
 import unittest
 from requests import post, patch, get
 
-host = 'http://178.154.208.157:8080/'
-# host = 'http://127.0.0.1:5000'
+host = 'http://178.154.208.157:8080'
 
 
 class MyTestCase(unittest.TestCase):
