@@ -1,10 +1,12 @@
 # OpenAPI
 
-### Устанавка
+### Устанавка необходимых компонентов
 
 ```commandline
 sudo apt install python3.9
-sudo pip3 install -U requirements.txt
+sudo apt install python3-pip
+sudo pip3 install flask
+sudo pip3 install sqlalchemy
 ```
 
 ### Запуск
