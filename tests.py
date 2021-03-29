@@ -1,7 +1,8 @@
 import unittest
 from requests import post, patch, get
 
-host = 'http://178.154.208.157:8080/'
+# host = 'http://178.154.208.157:8080/'
+host = 'http://127.0.0.1:5000'
 
 
 class MyTestCase(unittest.TestCase):
@@ -114,6 +115,11 @@ class MyTestCase(unittest.TestCase):
             "order_id": 1,
             "complete_time": "2021-01-10T10:33:01.42Z"
         }).json(), {"order_id": 1})
+        self.assertEqual(post(f'{host}/orders/complete', json={
+            "courier_id": 1,
+            "order_id": 3,
+            "complete_time": "2021-03-29T17:17:37.372181"
+        }).json(), {"order_id": 3})
 
         # GET .../couriers/courier_id
         self.assertEqual(get(f'{host}/couriers/999999').status_code, 404)

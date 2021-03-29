@@ -42,7 +42,7 @@ def couriers_post():
             failed.append({'id': i})
 
     if failed:
-        return app.make_response((jsonify(validation_error={'couriers': failed}), 400))
+        return jsonify(validation_error={'couriers': failed}), 400
 
     with db_session.create_session() as session:
         session: db_session.Session
@@ -189,7 +189,10 @@ def orders_complete_post():
                                                             OrderAssign.courier_id == courier_id).first()
         if not ao:
             return "", 400
-        ao.complete(datetime.strptime(complete_time, '%Y-%m-%dT%H:%M:%S.%fZ'))
+        try:
+            ao.complete(datetime.strptime(complete_time, '%Y-%m-%dT%H:%M:%S.%fZ'))
+        except ValueError:
+            ao.complete(datetime.fromisoformat(complete_time))
         session.commit()
 
     return jsonify({"order_id": order_id})
@@ -212,30 +215,39 @@ def couriers_get(courier_id: int):
             "working_hours": courier.get_working_hours()
         }
 
-        def td(number):
+        def get_t():
             # noinspection PyComparisonWithNone
-            orders: list = session.query(OrderAssign).filter(OrderAssign.complete_time != None).all()
-            orders = list(filter(lambda x: x.order.region == number, orders))
+            orders: list = session.query(OrderAssign).filter(OrderAssign.complete_time != None,
+                                                             OrderAssign.courier_id == courier_id).all()
 
             if not orders:
-                return 0
-            orders.sort(key=lambda x: (x.complete_time, x.assign_time))
-            total = 0
-            for i in range(len(orders)):
-                order_a: OrderAssign = orders[i]
-                if i == 0:
-                    total += (order_a.complete_time - order_a.assign_time).total_seconds()
-                else:
-                    order_b = orders[i - 1]
-                    total += (order_a.complete_time - order_b.complete_time).total_seconds()
-            return total / len(orders)
+                return None
 
-        t = min(td(i) for i in courier.get_regions())
-        if t != 0:
+            orders.sort(key=lambda x: (x.complete_time, x.assign_time))
+            regions = set(order.order.region for order in orders)
+            tds = set()
+            for region in regions:
+                orders_of_region = list(filter(lambda x: x.order.region == region, orders))
+                total = 0
+                for i in range(len(orders_of_region)):
+                    order_a: OrderAssign = orders_of_region[i]
+                    if i == 0:
+                        total += (order_a.complete_time - order_a.assign_time).total_seconds()
+                    else:
+                        order_b = orders_of_region[i - 1]
+                        total += (order_a.complete_time - order_b.complete_time).total_seconds()
+                tds.add(total / len(orders_of_region))
+            return min(tds)
+
+        t = get_t()
+
+        if t is not None:
+
             payload["rating"] = (60 * 60 - min(t, 60 * 60)) / (60 * 60) * 5
 
         # noinspection PyComparisonWithNone
-        orders_complete: list = session.query(OrderAssign).filter(OrderAssign.complete_time != None).all()
+        orders_complete: list = session.query(OrderAssign).filter(OrderAssign.complete_time != None,
+                                                                  OrderAssign.courier_id == courier_id).all()
         payload['earnings'] = sum(map(lambda x: x.price, orders_complete))
         return jsonify(payload)
 
